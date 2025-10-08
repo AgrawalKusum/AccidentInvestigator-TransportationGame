@@ -9,7 +9,7 @@ export default class BootScene extends Phaser.Scene {
     // Preload the image normally
     this.load.image(
       "accidentScene",
-      "WhatsApp Image 2025-10-08 at 22.19.38.jpeg"
+      "images/WhatsApp Image 2025-10-08 at 22.19.38.jpeg"
     );
   }
 
