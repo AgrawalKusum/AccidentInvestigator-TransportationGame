@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "title": "CASE #1 — Collision at City Intersection",
+    "description": "Two vehicles collided at a red light.",
+    "causes": ["Drunk Driving", "Brake Failure", "Signal Violation"],
+    "correctCause": "Signal Violation",
+    "clues": [
+      { "text": "Traffic signal was not working", "truth": true },
+      { "text": "Driver smelled of alcohol", "truth": false },
+      { "text": "Skid marks visible on road", "truth": true }
+    ],
+    "extraClues": [
+      { "text": "CCTV shows vehicle ran red", "truth": true },
+      { "text": "Road wet from rain", "truth": false }
+    ]
+  }
+]
