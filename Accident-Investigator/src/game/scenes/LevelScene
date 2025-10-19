@@ -1,0 +1,103 @@
+import Phaser from "phaser";
+
+export default class LevelScene extends Phaser.Scene {
+  constructor() {
+    super({ key: "LevelScene" });
+  }
+
+  preload() {
+    this.load.image("background", "images/level-bg.jpg"); // Background
+    this.load.image("levelLocked", "images/lock-btn.jpg");   // Locked level button
+    this.load.image("levelUnlocked", "images/unlock-btn.jpg"); // Unlocked level button
+  }
+
+  create() {
+    const { width, height } = this.scale;
+
+    // 🌄 Background
+    this.add.image(width / 2, height / 2, "background").setDisplaySize(width, height);
+
+    // 🎯 Title
+    this.add.text(width / 2, 60, "Select a Case to Investigate", {
+      fontSize: "36px",
+      color: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+
+    // 🔢 Levels setup
+    const totalLevels = 100;
+    const levelsPerRow = 4;
+
+    const buttonWidth = 120;
+    const buttonHeight = 100;
+    const spacingX = 160;
+    const spacingY = 140;
+
+    // Correctly center the grid
+    const gridWidth = (levelsPerRow - 1) * spacingX;
+    const offsetX = width / 2 - gridWidth / 2;
+    const offsetY = 150;
+
+    // Load unlocked level info from localStorage
+    let unlockedLevel = parseInt(localStorage.getItem("unlockedLevel")) || 1;
+
+    // 🌪️ Scrollable container
+    const scrollContainer = this.add.container(0, 0);
+    const scrollMask = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0).setScrollFactor(0);
+    scrollContainer.mask = new Phaser.Display.Masks.GeometryMask(this, scrollMask);
+
+    // 🎮 Create level buttons
+    for (let i = 1; i <= totalLevels; i++) {
+      const row = Math.floor((i - 1) / levelsPerRow);
+      const col = (i - 1) % levelsPerRow;
+
+      const x = offsetX + col * spacingX;
+      const y = offsetY + row * spacingY;
+
+      const isUnlocked = i <= unlockedLevel;
+
+      // Choose image based on locked/unlocked
+      const key = isUnlocked ? "levelUnlocked" : "levelLocked";
+      const button = this.add.image(x, y, key)
+        .setOrigin(0.5)
+        .setDisplaySize(buttonWidth, buttonHeight)
+        .setInteractive({ useHandCursor: isUnlocked });
+
+      // Level text (optional)
+      const levelText = this.add.text(x, y, `${i}`, {
+        fontSize: "20px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      }).setOrigin(0.5);
+
+      scrollContainer.add([button, levelText]);
+
+      // Only unlocked levels are clickable
+      if (isUnlocked) {
+        button.on("pointerdown", () => {
+          console.log(`Starting Level ${i}`);
+          this.scene.start("CaseScene", { levelId: i });
+        });
+      }
+    }
+
+    // 🖱️ Scroll handling
+    this.input.on("wheel", (_, __, ___, deltaY) => {
+      scrollContainer.y -= deltaY * 0.5;
+      scrollContainer.y = Phaser.Math.Clamp(scrollContainer.y, -((Math.ceil(totalLevels / levelsPerRow) - 1) * spacingY - height + 200), 0);
+    });
+
+    // 🔙 Back button
+    const backButton = this.add.text(width - 80, height - 60, "↩ Back", {
+      fontSize: "26px",
+      color: "#ffcc00",
+      fontStyle: "bold",
+      stroke: "#000",
+      strokeThickness: 4,
+    }).setInteractive({ useHandCursor: true });
+
+    backButton.on("pointerdown", () => this.scene.start("BootScene"));
+  }
+}
