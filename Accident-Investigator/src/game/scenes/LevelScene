@@ -65,7 +65,7 @@ export default class LevelScene extends Phaser.Scene {
         .setDisplaySize(buttonWidth, buttonHeight)
         .setInteractive({ useHandCursor: isUnlocked });
 
-      // Level text (optional)
+      // Level text
       const levelText = this.add.text(x, y, `${i}`, {
         fontSize: "20px",
         color: "#ffffff",
@@ -78,7 +78,7 @@ export default class LevelScene extends Phaser.Scene {
       if (isUnlocked) {
         button.on("pointerdown", () => {
           console.log(`Starting Level ${i}`);
-          this.scene.start("CaseScene", { levelId: i });
+          this.scene.start("AccidentScene", { levelId: i }); // ✅ start AccidentScene first
         });
       }
     }
