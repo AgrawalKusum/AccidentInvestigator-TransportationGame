@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import LifelineManager from "../objects/LifelineManager.js";
 import AnswerManager from "../objects/AnswerManager.js";
-import { createRetroText } from "../objects/UIHelpers.js";
 import cases from "../../data/cases.json";
 
 export default class CaseScene extends Phaser.Scene {
@@ -10,7 +9,7 @@ export default class CaseScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("accidentScene", "images/accident.jpg");
+    this.load.image("accidentScene", "images/WhatsApp Image 2025-10-08 at 22.36.49.jpeg");
   }
 
   create() {
@@ -30,31 +29,17 @@ export default class CaseScene extends Phaser.Scene {
     const scaleY = height / bg.height;
     const scale = Math.max(scaleX, scaleY);
     bg.setScale(scale).setScrollFactor(0);
-
-    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.45);
+    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.5);
 
     // --- Scene Title ---
-    const titleText = currentCase.title.replace("Case 1", "Scene 1");
-    const title = this.add.text(width / 2, height / 2, titleText, {
+    const title = this.add.text(width / 2, 40, "Clues & Culprits", {
       fontFamily: "Orbitron, sans-serif",
       fontSize: "32px",
       color: "#00FFCC",
       fontStyle: "bold",
       stroke: "#003333",
       strokeThickness: 4,
-      shadow: { offsetX: 0, offsetY: 0, color: "#00FFFF", blur: 15, fill: true },
-      align: "center",
-      wordWrap: { width: width - 100 },
     }).setOrigin(0.5);
-
-    // --- Initial Fade-in ---
-    title.alpha = 0;
-    this.tweens.add({
-      targets: title,
-      alpha: 1,
-      duration: 800,
-      ease: "Sine.easeInOut",
-    });
 
     // --- Managers ---
     this.answerManager = new AnswerManager(
@@ -63,13 +48,14 @@ export default class CaseScene extends Phaser.Scene {
       currentCase.correctCause,
       (result, pts) => this.handleResult(result, pts)
     );
+
     this.lifelineManager = new LifelineManager(
       this,
       this.lifelines,
       (id) => this.useLifeline(id)
     );
 
-    // --- Score & Lifeline Boxes (Top-Right) ---
+    // --- Score & Lifeline UI ---
     this.scoreBox = this.add.rectangle(width - 100, 40, 150, 40, 0x1e1e3e, 0.9)
       .setStrokeStyle(2, 0x00FFCC);
     this.scoreText = this.add.text(this.scoreBox.x, this.scoreBox.y, `Score: ${this.score}`, {
@@ -83,7 +69,6 @@ export default class CaseScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x00FFCC)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => this.lifelineManager.open());
-
     this.lifelineText = this.add.text(this.lifelineBox.x, this.lifelineBox.y, "Lifelines", {
       fontFamily: "monospace",
       fontSize: "18px",
@@ -91,95 +76,94 @@ export default class CaseScene extends Phaser.Scene {
       align: "center",
     }).setOrigin(0.5);
 
-    this.scoreBox.alpha = 0;
-    this.scoreText.alpha = 0;
-    this.lifelineBox.alpha = 0;
-    this.lifelineText.alpha = 0;
+    // --- Clues Section ---
+    const clueHeading = this.add.text(width / 2, 130, "CLUES", {
+      fontFamily: "Orbitron, sans-serif",
+      fontSize: "28px",
+      color: "#00FFCC",
+      fontStyle: "bold",
+    }).setOrigin(0.5);
 
-    // --- Transition Title & Reveal Clues/Culprits ---
-    this.time.delayedCall(500, () => {
-      this.tweens.add({
-        targets: title,
-        x: width / 2,
-        y: 30,
-        fontSize: "20px",
-        duration: 1000,
-        ease: "Power2",
-        onComplete: () => {
-          title.setOrigin(0.5, 0);
+    let clueStartY = 180;
+    const clueSpacingY = 100;
 
-          this.tweens.add({
-            targets: [this.scoreBox, this.scoreText, this.lifelineBox, this.lifelineText],
-            alpha: { from: 0, to: 1 },
-            duration: 600,
-          });
-
-          // --- Clues ---
-          const clueHeading = this.add.text(width / 2, 100, "CLUES", {
-            fontFamily: "Orbitron, sans-serif",
-            fontSize: "28px",
-            color: "#00FFCC",
-            fontStyle: "bold",
-          }).setOrigin(0.5);
-
-          let clueStartY = 160; // spacing below heading
-          const clueSpacingY = 100;
-          currentCase.clues.forEach((clue, i) => {
-            const clueBox = this.add.rectangle(width / 2, clueStartY + i * clueSpacingY, 360, 60, 0x1a3b1a, 0.8)
-              .setStrokeStyle(2, 0x00FFCC);
-
-            this.add.text(clueBox.x, clueBox.y, clue.text, {
-              fontFamily: "monospace",
-              fontSize: "18px",
-              color: "#00FFCC",
-              wordWrap: { width: 340, useAdvancedWrap: true },
-              align: "center"
-            }).setOrigin(0.5);
-          });
-
-          // --- Culprits ---
-          const culpritHeading = this.add.text(width / 2, clueStartY + currentCase.clues.length * clueSpacingY + 50, "CULPRITS", {
-            fontFamily: "Orbitron, sans-serif",
-            fontSize: "26px",
-            color: "#00FFCC",
-            fontStyle: "bold",
-          }).setOrigin(0.5);
-
-          let culpritStartY = culpritHeading.y + 50;
-          const culpritSpacingY = 80;
-          this.culpritBoxes = [];
-          currentCase.causes.forEach((cause, i) => {
-            const culpritBox = this.add.rectangle(width / 2, culpritStartY + i * culpritSpacingY, 400, 50, 0x4b1a1a, 0.85)
-              .setStrokeStyle(2, 0x00FFCC)
-              .setInteractive({ useHandCursor: true });
-
-            const culpritText = this.add.text(culpritBox.x, culpritBox.y, cause, {
-              fontFamily: "monospace",
-              fontSize: "20px",
-              color: "#00FFCC",
-              align: "center",
-            }).setOrigin(0.5);
-
-            culpritBox.on("pointerover", () => {
-              if (culpritBox.fillColor !== 0x5555ff)
-                culpritBox.setFillStyle(0xFF8844, 0.85);
-            });
-            culpritBox.on("pointerout", () => {
-              if (culpritBox.fillColor !== 0x5555ff)
-                culpritBox.setFillStyle(0x4b1a1a, 0.85);
-            });
-
-            culpritBox.on("pointerdown", () => {
-              this.culpritBoxes.forEach(box => box.setFillStyle(0x4b1a1a, 0.85));
-              culpritBox.setFillStyle(0x5555ff, 0.85);
-              this.answerManager.checkAnswer(cause);
-            });
-
-            this.culpritBoxes.push(culpritBox);
-          });
-        },
-      });
+    currentCase.clues.forEach((clue, i) => {
+      this.createCard(width / 2, clueStartY + i * clueSpacingY, 380, 70, 0x1a3b1a, clue.text);
     });
+
+    // --- Culprits Section ---
+    const culpritHeading = this.add.text(
+      width / 2,
+      clueStartY + currentCase.clues.length * clueSpacingY + 50,
+      "CULPRITS",
+      {
+        fontFamily: "Orbitron, sans-serif",
+        fontSize: "26px",
+        color: "#00FFCC",
+        fontStyle: "bold",
+      }
+    ).setOrigin(0.5);
+
+    let culpritStartY = culpritHeading.y + 50;
+    const culpritSpacingY = 80;
+    this.culpritBoxes = [];
+
+    currentCase.causes.forEach((cause, i) => {
+      const culpritCard = this.createCard(
+        width / 2,
+        culpritStartY + i * culpritSpacingY,
+        420,
+        60,
+        0x4b1a1a,
+        cause,
+        true
+      );
+
+      const cardBg = culpritCard.list[0];
+      cardBg.on("pointerdown", () => {
+        this.culpritBoxes.forEach(card => card.list[0].setFillStyle(0x4b1a1a, 0.9));
+        cardBg.setFillStyle(0x5555ff, 0.9);
+        this.answerManager.checkAnswer(cause);
+      });
+
+      this.culpritBoxes.push(culpritCard);
+    });
+
+    // --- Back Button ---
+    const backBtn = this.add.rectangle(80, 40, 120, 40, 0x1a65ac, 0.8).setInteractive();
+    const backText = this.add.text(80, 40, "← Back", {
+      fontFamily: "monospace",
+      fontSize: "18px",
+      color: "#FFFFFF",
+    }).setOrigin(0.5);
+    backBtn.on("pointerdown", () => this.scene.start("AccidentScene"));
+  }
+
+  createCard(x, y, width, height, color, text, interactive = false) {
+    const card = this.add.container(x, y);
+    const cardBg = this.add.graphics();
+    cardBg.fillStyle(color, 0.95);
+    cardBg.fillRoundedRect(-width / 2, -height / 2, width, height, 15);
+    cardBg.lineStyle(2, 0x00FFCC);
+    cardBg.strokeRoundedRect(-width / 2, -height / 2, width, height, 15);
+
+    const txt = this.add.text(0, 0, text, {
+      fontFamily: "monospace",
+      fontSize: "18px",
+      color: "#00FFCC",
+      wordWrap: { width: width - 40 },
+      align: "center",
+    }).setOrigin(0.5);
+
+    card.add([cardBg, txt]);
+
+    if (interactive) {
+      cardBg.setInteractive(new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height), Phaser.Geom.Rectangle.Contains);
+      cardBg.on("pointerover", () => this.tweens.add({ targets: card, scale: 1.05, duration: 150 }));
+      cardBg.on("pointerout", () => this.tweens.add({ targets: card, scale: 1.0, duration: 150 }));
+    }
+
+    return card;
   }
 
   useLifeline(id) {
@@ -193,15 +177,8 @@ export default class CaseScene extends Phaser.Scene {
 
     if (id === "newclue") {
       const width = this.scale.width;
-      const clueY = 160 + this.culpritBoxes.length * 100 + 80;
-      const clueBox = this.add.rectangle(width / 2, clueY, 360, 60, 0x1a3b1a, 0.8).setStrokeStyle(2, 0x00FFCC);
-      this.add.text(clueBox.x, clueBox.y, "CCTV shows vehicle ran red light", {
-        fontFamily: "monospace",
-        fontSize: "18px",
-        color: "#00FFCC",
-        wordWrap: { width: 340, useAdvancedWrap: true },
-        align: "center"
-      }).setOrigin(0.5);
+      const clueY = 180 + this.culpritBoxes.length * 100 + 80;
+      this.createCard(width / 2, clueY, 380, 70, 0x1a3b1a, "CCTV footage shows the truck ran a red light.");
     }
   }
 
@@ -212,7 +189,7 @@ export default class CaseScene extends Phaser.Scene {
     }
 
     const feedbackColor = result === "correct" ? "#00FFCC" : "#FF4444";
-    const feedbackText = result === "correct" ? "✅ Correct!" : "❌ Wrong. Try the next scene.";
+    const feedbackText = result === "correct" ? "✅ Correct!" : "❌ Wrong. Try again.";
 
     const feedback = this.add.text(
       this.scale.width / 2,
