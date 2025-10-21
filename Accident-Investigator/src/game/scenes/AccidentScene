@@ -1,0 +1,87 @@
+import Phaser from "phaser";
+import cases from "../../data/cases.json";
+
+export default class AccidentScene extends Phaser.Scene {
+  constructor() {
+    super("AccidentScene");
+  }
+
+  preload() {
+    this.load.image("accidentScene", "images/WhatsApp Image 2025-10-08 at 22.36.49.jpeg");
+  }
+
+  create() {
+    const { width, height } = this.scale;
+    const currentCase = cases[0];
+
+    // --- Background ---
+    const bg = this.add.image(width / 2, height / 2, "accidentScene");
+    const scaleX = width / bg.width;
+    const scaleY = height / bg.height;
+    const scale = Math.max(scaleX, scaleY);
+    bg.setScale(scale).setScrollFactor(0);
+    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.45);
+
+    // --- Title ---
+    const title = this.add.text(width / 2, 80, currentCase.title, {
+      fontFamily: "Orbitron, sans-serif",
+      fontSize: "34px",
+      color: "#00FFCC",
+      fontStyle: "bold",
+      stroke: "#003333",
+      strokeThickness: 4,
+      align: "center",
+    }).setOrigin(0.5);
+
+    // --- Explanation Text ---
+    const explanationLines = [
+      "On a foggy morning at 7:45 AM, a speeding truck lost control while overtaking a car on NH-05.",
+      "Due to low visibility and poor road markings, the truck drifted into the opposite lane,",
+      "colliding with a small car. Two passengers were injured, one vehicle overturned.",
+      "The truck driver claimed the brakes failed—but something about the scene feels off...",
+    ];
+
+    const textBox = this.add.text(100, 180, "", {
+      fontFamily: "monospace",
+      fontSize: "20px",
+      color: "#FFFFFF",
+      wordWrap: { width: width - 200 },
+    });
+
+    this.lineIndex = 0;
+    this.showLine(explanationLines, textBox);
+
+    // --- Continue Button ---
+    this.time.delayedCall(12000, () => {
+      const btn = this.add.rectangle(width / 2, height - 80, 220, 50, 0x1a65ac, 0.8)
+        .setInteractive({ useHandCursor: true });
+      const btnText = this.add.text(width / 2, height - 80, "View Clues →", {
+        fontFamily: "Orbitron, sans-serif",
+        fontSize: "20px",
+        color: "#FFFFFF",
+      }).setOrigin(0.5);
+
+      btn.on("pointerover", () => this.tweens.add({ targets: btn, scale: 1.05, duration: 100 }));
+      btn.on("pointerout", () => this.tweens.add({ targets: btn, scale: 1.0, duration: 100 }));
+      btn.on("pointerdown", () => this.scene.start("CaseScene"));
+    });
+  }
+
+  showLine(lines, textBox) {
+    if (this.lineIndex >= lines.length) return;
+    const line = lines[this.lineIndex];
+    this.tweens.addCounter({
+      from: 0,
+      to: line.length,
+      duration: 1200,
+      onUpdate: (tween) => {
+        const charCount = Math.floor(tween.getValue());
+        textBox.setText(lines.slice(0, this.lineIndex).join("\n") + "\n" + line.substring(0, charCount));
+      },
+      onComplete: () => {
+        this.lineIndex++;
+        this.time.delayedCall(800, () => this.showLine(lines, textBox));
+      },
+    });
+  }
+}
